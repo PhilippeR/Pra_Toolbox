@@ -1,0 +1,1 @@
+Simply parse a playlist to display start and end times, the number of chunks and adverts
