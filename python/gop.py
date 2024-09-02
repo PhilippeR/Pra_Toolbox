@@ -89,6 +89,9 @@ response_json = subprocess.check_output(command, shell=True, stderr=None)
 
 frames = json.loads(response_json)["frames"]
 
+# Sauvegardez les données JSON dans un fichier
+with open('frames.json', 'w') as json_file:
+    json.dump(frames, json_file, indent=4)
 
 gop_count = 0
 gops = []
