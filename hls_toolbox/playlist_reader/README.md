@@ -1,1 +1,4 @@
-Simply parse a playlist to display start and end times, the number of chunks and adverts
+Simply parse a master or media playlist to display some information. 
+
+
+![](mediaplaylistreader.png "Screenshot").
