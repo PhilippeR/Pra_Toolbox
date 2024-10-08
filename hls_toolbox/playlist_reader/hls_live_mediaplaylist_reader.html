@@ -68,7 +68,7 @@
 
     <div class="container">
         <h1>Live Media Playlist Reader</h1>
-        <br> Fetch a mediaplaylist and check if the media sequence for the first and the last chunk grow up 
+        <br> Fetch a mediaplaylist and check if media sequence for the first and the last chunk grows up <br> <br> 
         <div class="input-group">
             <label for="playlistUrl">Enter Media Playlist URL:</label>
             <input type="text" id="playlistUrl" placeholder="https://example.com/playlist.m3u8">
@@ -183,14 +183,14 @@
                 resultsDiv.innerHTML = `Last measurement: ${currentTime} </br>
                 <p>Number of chunks: ${chunkCount} - Total duration: ${totalDuration.toFixed(2)} seconds</p>
                 <p>Start time: ${startTime.toISOString()} - End time: ${endTime.toISOString()}</p>
-                <p>Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
-                <p>Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
+                <p>Top Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
+                <p>Last Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
             `;
-                if ((diffMediaSequence < 0) || (diffEndMediaSequence < 0) ) {
+                if ((diffMediaSequence < 1) || (diffEndMediaSequence < 1) ) {
                     alarmsDiv.insertAdjacentHTML('afterend', `
                 <p>Start time: ${startTime.toISOString()} - End time: ${endTime.toISOString()}</p>
-                <p>Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
-                <p>Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
+                <p>Top Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
+                <p>Last Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
             `);
                 };
                 lastTopMediaSequence = mediaSequence;
