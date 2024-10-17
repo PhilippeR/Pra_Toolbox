@@ -68,14 +68,14 @@
 
     <div class="container">
         <h1>Live Media Playlist Reader</h1>
-        <br> Fetch a mediaplaylist and check if media sequence for the first and the last chunk grows up <br> <br> 
+        <br> Fetch a mediaplaylist and check if media sequence for the first and the last chunk grows up <br> <br>
         <div class="input-group">
             <label for="playlistUrl">Enter Media Playlist URL:</label>
-            <input type="text" id="playlistUrl" placeholder="https://example.com/playlist.m3u8">
+            <input type="text" id="playlistUrl" placeholder="https://example.com/media_playlist.m3u8">
         </div>
         <div class="input-group">
-            <label for="Timer">Timer:</label>
-            <input type="number" id="timer" placeholder="10s">
+            <label for="Timer">Timer (sec):</label>
+            <input type="number" id="timer" value=10 placeholder="10s">
         </div>
         <button id="toggleButton" onclick="toggleInterval()">GO</button>
         <div class="results" id="results">
@@ -92,7 +92,7 @@
         let lastEndTime;
         let lastTopMediaSequence = 0;
         let lastEndMediaSequence = 0;
-        
+
 
         // start/stop button 
         function toggleInterval() {
@@ -118,24 +118,28 @@
             const fileInput = document.getElementById('playlistFile');
             const resultsDiv = document.getElementById('results');
             const alarmsDiv = document.getElementById('alarms');
+            const currentTime = getTime();
             let playlistContent = '';
 
+
             resultsDiv.innerHTML = '';
-            alarmsDiv.innerHTML = 'Alarms </br>';
+            // alarmsDiv.innerHTML = 'Alarms </br>';
 
             if (url) {
                 try {
                     const response = await fetch(url);
                     playlistContent = await response.text();
+                    let alarm = alarmsDiv.innerText + `\n${currentTime} HTTP Error ${response.status}`;
+                    if (response.status != 200) {
+                        alarmsDiv.innerText = alarm;
+                    };
+
                 } catch (error) {
                     resultsDiv.innerHTML = `<p>Error fetching URL: ${error.message}</p>`;
                     return;
                 }
-            } else if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                playlistContent = await file.text();
             } else {
-                resultsDiv.innerHTML = '<p>Please provide a URL or upload a file.</p>';
+                resultsDiv.innerHTML = '<p>Please provide a URL.</p>';
                 return;
             }
 
@@ -146,7 +150,7 @@
             const resultsDiv = document.getElementById('results');
             const alarmsDiv = document.getElementById('alarms');
             const lines = playlistContent.split('\n');
-            const currentTime=getTime();
+            const currentTime = getTime();
             let startTimeStr = null;
             let totalDuration = 0;
             let chunkCount = 0;
@@ -165,10 +169,10 @@
                     chunkCount += 1;
                 } else if (line.startsWith("#EXT-X-MEDIA-SEQUENCE")) {
                     mediaSequence = line.split("#EXT-X-MEDIA-SEQUENCE:")[1].trim();
-                    mediaSequence=parseInt(mediaSequence);
+                    mediaSequence = parseInt(mediaSequence);
                 }
             });
-            endMediaSequence=mediaSequence+chunkCount;
+            endMediaSequence = mediaSequence + chunkCount;
 
             // Analyze
             if (startTimeStr) {
@@ -186,12 +190,13 @@
                 <p>Top Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
                 <p>Last Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
             `;
-                if ((diffMediaSequence < 1) || (diffEndMediaSequence < 1) ) {
-                    alarmsDiv.insertAdjacentHTML('afterend', `
+                if ((diffMediaSequence < 0) || (diffEndMediaSequence < 0)) {
+                    alarmsDiv.innerText = alarmsDiv.innerText + `
                 <p>Start time: ${startTime.toISOString()} - End time: ${endTime.toISOString()}</p>
                 <p>Top Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
                 <p>Last Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
-            `);
+                ------------\n`
+
                 };
                 lastTopMediaSequence = mediaSequence;
                 lastEndMediaSequence = endMediaSequence;
@@ -207,7 +212,7 @@
             return currentTime;
 
         }
-        function getTime(){
+        function getTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
