@@ -205,13 +205,13 @@
             }
         }
 
-
         function LastChunckTimestamp(startTimeStr, duration) {
             const startTime = new Date(startTimeStr);
             const currentTime = new Date(startTime.getTime() + duration * 1000);
             return currentTime;
 
         }
+
         function getTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
