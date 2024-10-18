@@ -1,4 +1,4 @@
-Simply parse a master or media playlist to display some information. 
+Single page, easy to use, easy to share 
 
 
 ![](mediaplaylistreader.png "Screenshot").
