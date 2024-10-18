@@ -1,4 +1,8 @@
 Single page, easy to use, easy to share 
 
 
-![](mediaplaylistreader.png "Screenshot").
+![alt text](images/MasterPlaylistComparator.PNG)
+
+![alt text](images/LiveMediaPlaylistChecker.PNG)
+
+![alt text](images/Mediaplaylistreader.PNG)
