@@ -27,7 +27,7 @@
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             animation: fadeInDown 0.6s ease;
         }
 
@@ -41,6 +41,28 @@
         .header p {
             font-size: 1.1em;
             opacity: 0.9;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .info-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .info-card p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
         }
 
         .input-card {
@@ -210,6 +232,10 @@
             margin-bottom: 15px;
         }
 
+        .badge.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px;
@@ -254,6 +280,14 @@
         <div class="header">
             <h1>🎬 Media Playlist Analyzer</h1>
             <p>Analyze HLS playlists with style</p>
+        </div>
+
+        <div class="info-card">
+            <h3>ℹ️ About This Tool</h3>
+            <p>This analyzer helps you understand HLS (HTTP Live Streaming) playlists by extracting key information:</p>
+            <p><strong>• Stream Details:</strong> Total chunks, duration, start and end times</p>
+            <p><strong>• Discontinuities:</strong> Detects EXT-X-DISCONTINUITY tags and calculates missing chunks between segments</p>
+            <p><strong>• Ad Breaks:</strong> Identifies CUE-OUT/CUE-IN markers and ad insertion points</p>
         </div>
 
         <div class="input-card">
@@ -301,6 +335,11 @@
             displayResults(playlistContent);
         }
 
+        function extractChunkNumber(line) {
+            const match = line.match(/(\d+)\./);
+            return match ? parseInt(match[1]) : null;
+        }
+
         function displayResults(playlistContent) {
             const lines = playlistContent.split('\n');
             let startTimeStr = null;
@@ -316,8 +355,10 @@
             let adInfo = null;
             let adEndTime = null;
             let currentTime;
+            let previousChunkNumber = null;
+            let currentChunkNumber = null;
 
-            lines.forEach(line => {
+            lines.forEach((line, index) => {
                 if (line.startsWith("#EXT-X-PROGRAM-DATE-TIME")) {
                     const timeStr = line.split("#EXT-X-PROGRAM-DATE-TIME:")[1].trim();
                     if (!startTimeStr) startTimeStr = timeStr;
@@ -328,11 +369,58 @@
                     chunkCount += 1;
                     currentTime = calculateTime(playlistStartTimeStr, totalDuration);
                 } else if (line.startsWith("#EXT-X-DISCONTINUITY")) {
+                    // Skip first discontinuity if it's not in the first 10 lines
+                    if (discontinuityCounter === 0 && index >= 10) {
+                        discontinuityCounter++;
+                        return;
+                    }
+                    
                     discontinuityCounter += 1;
                     const discontinuityTime = calculateTime(playlistStartTimeStr, totalDuration);
+                    
+                    // Find the chunk numbers before and after discontinuity
+                    let chunkBefore = null;
+                    let chunkAfter = null;
+                    let lineBefore = '';
+                    let lineAfter = '';
+                    
+                    // Look backwards for the previous chunk
+                    for (let i = index - 1; i >= 0; i--) {
+                        if (!lines[i].startsWith("#")) {
+                            lineBefore = lines[i];
+                            chunkBefore = extractChunkNumber(lines[i]);
+                            if (chunkBefore !== null) break;
+                        }
+                    }
+                    
+                    // Look forwards for the next chunk
+                    for (let i = index + 1; i < lines.length; i++) {
+                        if (!lines[i].startsWith("#")) {
+                            lineAfter = lines[i];
+                            chunkAfter = extractChunkNumber(lines[i]);
+                            if (chunkAfter !== null) break;
+                        }
+                    }
+                    
+                    let missingChunks = null;
+                    if (chunkBefore !== null && chunkAfter !== null) {
+                        missingChunks = chunkAfter - chunkBefore - 1;
+                    }
+                    
+                    // Get the 3 lines context: line before, discontinuity line, line after
+                    const contextLines = [
+                        index > 0 ? lines[index - 1] : '',
+                        line,
+                        index < lines.length - 1 ? lines[index + 1] : ''
+                    ];
+                    
                     discontinuities.push({
                         time: discontinuityTime,
-                        number: discontinuityCounter
+                        number: discontinuityCounter,
+                        chunkBefore: chunkBefore,
+                        chunkAfter: chunkAfter,
+                        missingChunks: missingChunks,
+                        context: contextLines
                     });
                 } else if (line.startsWith("#EXT-OATCLS-SCTE35")) {
                     adInfo = line;
@@ -388,10 +476,12 @@
             }
 
             if (discontinuities.length > 0) {
+                const totalMissing = discontinuities.reduce((sum, disc) => sum + (disc.missingChunks || 0), 0);
                 html += `
                     <div class="section-card">
                         <h2>Discontinuities</h2>
                         <div class="badge">${discontinuityCounter} discontinuity found</div>
+                        ${totalMissing > 0 ? `<div class="badge warning">${totalMissing} missing chunks</div>` : ''}
                 `;
                 discontinuities.forEach(disc => {
                     html += `
@@ -399,6 +489,9 @@
                             <div class="item-title">⚡ Discontinuity #${disc.number}</div>
                             <div class="item-detail">🕐 Time: ${disc.time.toLocaleString()}</div>
                             <div class="item-detail">📅 ISO: ${disc.time.toISOString()}</div>
+                            ${disc.chunkBefore !== null ? `<div class="item-detail">📦 Chunk before: #${disc.chunkBefore}</div>` : ''}
+                            ${disc.chunkAfter !== null ? `<div class="item-detail">📦 Chunk after: #${disc.chunkAfter}</div>` : ''}
+                            ${disc.missingChunks !== null ? `<div class="item-detail" style="color: ${disc.missingChunks > 0 ? '#f5576c' : '#10b981'}; font-weight: 600;">⚠️ Missing chunks: ${disc.missingChunks}</div>` : '<div class="item-detail" style="color: #999;">ℹ️ Unable to determine chunk numbers</div>'}
                         </div>
                     `;
                 });

@@ -4,85 +4,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HLS Media Playlist Reader</title>
+    <title>HLS Live Media Sequence Checker</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+        * {
+            margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
             background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .description {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .description h2 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.4em;
+        }
+
+        .description p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .description ul {
+            margin-left: 20px;
+            color: #555;
+            line-height: 1.8;
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .input-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
         }
 
         .input-group input {
             width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            text-align: center;
+            margin: 30px 0;
         }
 
         button {
-            padding: 10px 20px;
-            background: #007BFF;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         button:hover {
-            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
-        .results,
-        .ads {
-            margin-top: 20px;
+        button:active {
+            transform: translateY(0);
         }
 
-        .results p,
-        .ads p {
-            background: #e9ecef;
-            padding: 10px;
-            border-radius: 4px;
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .info-box.show {
+            display: block;
+        }
+
+        .info-box p {
+            color: #1565C0;
+            font-weight: 600;
+            margin: 5px 0;
+        }
+
+        .results, .alarms {
+            margin-top: 30px;
+        }
+
+        .results {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .results h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .results p {
+            background: white;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            color: #333;
+            border-left: 3px solid #667eea;
+        }
+
+        .alarms {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ffc107;
+            white-space: pre-line;
+            color: #856404;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alarms:empty {
+            display: none;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-running {
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+        }
+
+        .status-stopped {
+            background: #9e9e9e;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
-        <h1>Live Media Sequence Checker</h1>
-        <br> Fetch a mediaplaylist and check if media sequence for the first and the last chunk grows up <br> <br>
-        <div class="input-group">
-            <label for="playlistUrl">Enter Media Playlist URL:</label>
-            <input type="text" id="playlistUrl" placeholder="https://example.com/media_playlist.m3u8">
+        <div class="header">
+            <h1>🎬 HLS Live Media Sequence Checker</h1>
+            <p>Monitor HLS media playlist continuity in real-time</p>
         </div>
-        <div class="input-group">
-            <label for="Timer">Timer (sec):</label>
-            <input type="number" id="timer" value=10 placeholder="10s">
-        </div>
-        <button id="toggleButton" onclick="toggleInterval()">GO</button>
-        <div class="results" id="results">
-            <!-- Results will be displayed here -->
-        </div>
-        <div class="alarms" id="alarms">
-            <!-- alarms will be displayed here -->
+
+        <div class="content">
+            <div class="description">
+                <h2>📋 Description</h2>
+                <p>Cet outil surveille la continuité d'un flux HLS en direct en vérifiant l'évolution des numéros de séquence média.</p>
+                <p><strong>Fonctionnalités :</strong></p>
+                <ul>
+                    <li>Récupération périodique de la playlist média HLS</li>
+                    <li>Surveillance de l'évolution des séquences média (début et fin)</li>
+                    <li>Détection automatique des anomalies (séquences qui régressent)</li>
+                    <li>Affichage de la durée totale et du nombre de chunks</li>
+                    <li>Extraction automatique de la durée cible (EXT-X-TARGETDURATION)</li>
+                </ul>
+            </div>
+
+            <div class="info-box" id="infoBox">
+                <p>🎯 Target Duration: <span id="targetDuration">-</span> secondes</p>
+            </div>
+
+            <div class="input-group">
+                <label for="playlistUrl">🔗 URL de la Media Playlist :</label>
+                <input type="text" id="playlistUrl" placeholder="https://example.com/media_playlist.m3u8">
+            </div>
+
+            <div class="input-group">
+                <label for="timer">⏱️ Intervalle de vérification (secondes) :</label>
+                <input type="number" id="timer" value="10" placeholder="10" min="1">
+            </div>
+
+            <div class="button-group">
+                <button id="toggleButton" onclick="toggleInterval()">
+                    <span class="status-indicator status-stopped"></span>
+                    Démarrer
+                </button>
+            </div>
+
+            <div class="results" id="results" style="display: none;">
+                <h3>📊 Résultats</h3>
+            </div>
+
+            <div class="alarms" id="alarms"></div>
         </div>
     </div>
 
@@ -93,53 +269,49 @@
         let lastTopMediaSequence = 0;
         let lastEndMediaSequence = 0;
 
-
-        // start/stop button 
         function toggleInterval() {
             let timerValue = document.getElementById("timer").value;
             let interval = parseInt(timerValue) * 1000;
+            const button = document.getElementById("toggleButton");
+            const statusIndicator = button.querySelector('.status-indicator');
 
             if (isRunning) {
                 clearInterval(intervalId);
-                document.getElementById("toggleButton").textContent = "Start";
-                console.log("stop timer");
+                button.innerHTML = '<span class="status-indicator status-stopped"></span> Démarrer';
+                isRunning = false;
             } else {
+                fetchPlaylist();
                 intervalId = setInterval(fetchPlaylist, interval);
-                document.getElementById("toggleButton").textContent = "Stop";
-                document.getElementById('results').innerHTML = ""
-                document.getElementById('alarms').innerHTML = ""
-                console.log("start timer");
+                button.innerHTML = '<span class="status-indicator status-running"></span> Arrêter';
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').innerHTML = '<h3>📊 Résultats</h3><p>Chargement...</p>';
+                document.getElementById('alarms').innerHTML = '';
+                isRunning = true;
             }
-            isRunning = !isRunning;
         }
 
         async function fetchPlaylist() {
             const url = document.getElementById('playlistUrl').value;
-            const fileInput = document.getElementById('playlistFile');
             const resultsDiv = document.getElementById('results');
             const alarmsDiv = document.getElementById('alarms');
             const currentTime = getTime();
             let playlistContent = '';
 
+            if (!url) {
+                resultsDiv.innerHTML = '<h3>📊 Résultats</h3><p>⚠️ Veuillez fournir une URL de playlist.</p>';
+                return;
+            }
 
-            resultsDiv.innerHTML = '';
-            // alarmsDiv.innerHTML = 'Alarms </br>';
-
-            if (url) {
-                try {
-                    const response = await fetch(url);
-                    playlistContent = await response.text();
-                    let alarm = alarmsDiv.innerText + `\n${currentTime} HTTP Error ${response.status}`;
-                    if (response.status != 200) {
-                        alarmsDiv.innerText = alarm;
-                    };
-
-                } catch (error) {
-                    resultsDiv.innerHTML = `<p>Error fetching URL: ${error.message}</p>`;
-                    return;
+            try {
+                const response = await fetch(url);
+                playlistContent = await response.text();
+                
+                if (response.status != 200) {
+                    let alarm = alarmsDiv.innerText + `\n${currentTime} ❌ HTTP Error ${response.status}\n------------\n`;
+                    alarmsDiv.innerText = alarm;
                 }
-            } else {
-                resultsDiv.innerHTML = '<p>Please provide a URL.</p>';
+            } catch (error) {
+                resultsDiv.innerHTML = `<h3>📊 Résultats</h3><p>❌ Erreur lors de la récupération: ${error.message}</p>`;
                 return;
             }
 
@@ -149,6 +321,7 @@
         function parseAndDisplayResults(playlistContent) {
             const resultsDiv = document.getElementById('results');
             const alarmsDiv = document.getElementById('alarms');
+            const infoBox = document.getElementById('infoBox');
             const lines = playlistContent.split('\n');
             const currentTime = getTime();
             let startTimeStr = null;
@@ -158,8 +331,8 @@
             let endMediaSequence = 0;
             let diffMediaSequence = 0;
             let diffEndMediaSequence = 0;
+            let targetDuration = null;
 
-            // Tag extraction from playlist
             lines.forEach(line => {
                 if (line.startsWith("#EXT-X-PROGRAM-DATE-TIME")) {
                     startTimeStr = line.split("#EXT-X-PROGRAM-DATE-TIME:")[1].trim();
@@ -170,11 +343,24 @@
                 } else if (line.startsWith("#EXT-X-MEDIA-SEQUENCE")) {
                     mediaSequence = line.split("#EXT-X-MEDIA-SEQUENCE:")[1].trim();
                     mediaSequence = parseInt(mediaSequence);
+                } else if (line.startsWith("#EXT-X-TARGETDURATION")) {
+                    targetDuration = line.split("#EXT-X-TARGETDURATION:")[1].trim();
+                    targetDuration = parseInt(targetDuration);
                 }
             });
+
+            if (targetDuration !== null) {
+                document.getElementById('targetDuration').textContent = targetDuration;
+                infoBox.classList.add('show');
+                
+                const timerInput = document.getElementById('timer');
+                if (timerInput.value == 10) {
+                    timerInput.value = targetDuration;
+                }
+            }
+
             endMediaSequence = mediaSequence + chunkCount;
 
-            // Analyze
             if (startTimeStr) {
                 const startTime = new Date(startTimeStr);
                 const endTime = new Date(startTime.getTime() + totalDuration * 1000);
@@ -183,33 +369,28 @@
                 diffMediaSequence = mediaSequence - lastTopMediaSequence;
                 diffEndMediaSequence = endMediaSequence - lastEndMediaSequence;
 
-                // Results & alarms display
-                resultsDiv.innerHTML = `Last measurement: ${currentTime} </br>
-                <p>Number of chunks: ${chunkCount} - Total duration: ${totalDuration.toFixed(2)} seconds</p>
-                <p>Start time: ${startTime.toISOString()} - End time: ${endTime.toISOString()}</p>
-                <p>Top Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
-                <p>Last Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
-            `;
-                if ((diffMediaSequence < 0) || (diffEndMediaSequence < 0)) {
-                    alarmsDiv.innerText = alarmsDiv.innerText + `
-                <p>Start time: ${startTime.toISOString()} - End time: ${endTime.toISOString()}</p>
-                <p>Top Media sequence: ${mediaSequence} - Media sequence n-1: ${lastTopMediaSequence} - diff ${diffMediaSequence}</p>
-                <p>Last Media sequence: ${endMediaSequence} - Media sequence n-1: ${lastEndMediaSequence} - diff ${diffEndMediaSequence}</p>
-                ------------\n`
+                resultsDiv.innerHTML = `<h3>📊 Résultats</h3>
+                    <p><strong>🕐 Dernière mesure :</strong> ${currentTime}</p>
+                    <p><strong>📦 Nombre de chunks :</strong> ${chunkCount} | <strong>⏱️ Durée totale :</strong> ${totalDuration.toFixed(2)}s</p>
+                    <p><strong>🎬 Début :</strong> ${startTime.toISOString()}</p>
+                    <p><strong>🏁 Fin :</strong> ${endTime.toISOString()}</p>
+                    <p><strong>🔢 Séquence début :</strong> ${mediaSequence} | <strong>Précédente :</strong> ${lastTopMediaSequence} | <strong>Diff :</strong> ${diffMediaSequence}</p>
+                    <p><strong>🔢 Séquence fin :</strong> ${endMediaSequence} | <strong>Précédente :</strong> ${lastEndMediaSequence} | <strong>Diff :</strong> ${diffEndMediaSequence}</p>
+                `;
 
-                };
+                if ((diffMediaSequence < 0) || (diffEndMediaSequence < 0)) {
+                    alarmsDiv.innerText = alarmsDiv.innerText + `${currentTime} ⚠️ ANOMALIE DÉTECTÉE
+Début: ${startTime.toISOString()} - Fin: ${endTime.toISOString()}
+Séquence début: ${mediaSequence} | Précédente: ${lastTopMediaSequence} | Diff: ${diffMediaSequence}
+Séquence fin: ${endMediaSequence} | Précédente: ${lastEndMediaSequence} | Diff: ${diffEndMediaSequence}
+------------\n`;
+                }
+
                 lastTopMediaSequence = mediaSequence;
                 lastEndMediaSequence = endMediaSequence;
             } else {
-                resultsDiv.innerHTML = '<p>Error: Could not find start time in playlist.</p>';
+                resultsDiv.innerHTML = '<h3>📊 Résultats</h3><p>❌ Erreur : Impossible de trouver le temps de début dans la playlist.</p>';
             }
-        }
-
-        function LastChunckTimestamp(startTimeStr, duration) {
-            const startTime = new Date(startTimeStr);
-            const currentTime = new Date(startTime.getTime() + duration * 1000);
-            return currentTime;
-
         }
 
         function getTime() {
@@ -217,11 +398,9 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            const currentTime = `${hours}h${minutes}m${seconds}s`;
-            return currentTime
+            return `${hours}h${minutes}m${seconds}s`;
         }
     </script>
-
 </body>
 
 </html>

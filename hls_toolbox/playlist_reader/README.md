@@ -5,4 +5,4 @@
 
 ![alt text](images/LiveMediaPlaylistChecker.PNG)
 
-![alt text](images/Mediaplaylistreader.PNG)
+![alt text](images/Mediaplaylistanalyzer.png)
